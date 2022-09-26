@@ -1,0 +1,24 @@
+{
+    "compilerOptions": {
+        "target": "ES2020",
+        "lib": ["ES2020"],
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "sourceMap": true,
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
+        "declaration": false,
+        "outDir": "dist",
+        "typeRoots": ["node_modules/@types"],
+        "allowJs": true,
+        "esModuleInterop": true
+    },
+    "ts-node": {
+        "esm": true
+    },
+    "include": [
+        "scripts/typescript/*.ts"
+    ],
+    "files": ["scripts/typescript/cosm.ts"],
+    "exclude": ["node_modules"]
+}

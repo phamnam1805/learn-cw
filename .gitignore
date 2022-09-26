@@ -1,0 +1,9 @@
+
+target/
+artifacts/
+.env
+node_modules/
+
+Cargo.lock
+
+**/*.rs.bk
