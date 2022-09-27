@@ -17,7 +17,7 @@ pub fn instantiate(
     _info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, StdError> {
-    let config_state = Config {
+    let config_state: Config = Config {
         purchase_price: msg.purchase_price,
         transfer_price: msg.transfer_price,
     };

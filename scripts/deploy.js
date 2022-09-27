@@ -13,24 +13,66 @@ async function main() {
     let cosm = await Cosm.init(malagaOptions, MNEMONIC);
     let simpleOption = fs.readFileSync(ARTIFACTS + "/simple_option.wasm");
     let nameservice = fs.readFileSync(ARTIFACTS + "/cw_nameservice.wasm");
+    let simpleContract = fs.readFileSync(ARTIFACTS + "/simple_contract.wasm");
 
     // Deploy contract
     // let instaniateMsg = {
-    //     purchase_price: coin(100, "umlg"),
-    //     transfer_price: coin(999, "umlg")
+    //     age: 22,
+    //     owner_name: "Ryuu"
     // }
 
-    // console.log(await base.deployContractFromWasm(nameservice, instaniateMsg, "Hello World"));
+    // console.log(await cosm.deployContractFromWasm(simpleContract, instaniateMsg, "Ryuu's first contract"));
 
     // Interact with contract 
-    let contractAddress = "wasm13rgevfdvvsk3va68xcunlg7fyk9ycadj2hpvapkcfu86y59fvp3s3gtlmj";
-    let executeMsg = {
-        register:{
-            name: "Raijin"
+    let contractAddress = "wasm1aku78gq0p3jz0vyc9td83mfglkz77stugdz828uck0z8mgs028sq580s7q";
+
+    // let executeMsg = {
+    //     add_user: {
+    // data: {
+    //     age: 22,
+    //     name: "Raijin"
+    // }
+    //     }
+    // }
+
+    // console.log(await cosm.execute(contractAddress, executeMsg, "add user raijin", []));
+
+    // Query
+    let queryMsg = {
+        get_data: {
+            user_name: "Raijin"
         }
     }
 
-    console.log(await cosm.execute(contractAddress, executeMsg, "How are you?", [coin(100, "umlg")]));
+    console.log(await cosm.query(contractAddress, queryMsg));
+    queryMsg = {
+        get_data: {
+            user_name: "RaijinRyuu"
+        }
+    }
+
+    console.log(await cosm.query(contractAddress, queryMsg));
+
+    // Update
+    let executeMsg = {
+        update_user: {
+            data: {
+                age: 24,
+                name: "Raijin"
+            }
+        }
+    }
+
+    
+    console.log(await cosm.execute(contractAddress, executeMsg, "update user raijin", []));
+
+    queryMsg = {
+        get_data: {
+            user_name: "Raijin"
+        }
+    }
+
+    console.log(await cosm.query(contractAddress, queryMsg));
 }
 
 main();
