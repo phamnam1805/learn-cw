@@ -5,7 +5,7 @@ use cw2::set_contract_version;
 
 use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
-use crate::state::{owner, user, Data};
+use crate::state::{OWNER, USER, Data};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:simple-contract";
@@ -18,14 +18,13 @@ pub fn instantiate(
     info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
-    owner.save(deps.storage, &info.sender);
-
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+    OWNER.save(deps.storage, &info.sender)?;
     let owner_data = Data {
         name: msg.owner_name.clone(),
         age: msg.age.clone(),
     };
-    user.save(deps.storage, msg.owner_name.clone(), &owner_data);
+    USER.save(deps.storage, msg.owner_name.clone(), &owner_data)?;
     Ok(Response::new()
         .add_attribute("method", "instantiate")
         .add_attribute("owner", info.sender.clone())
@@ -50,7 +49,7 @@ pub mod execute {
     use super::*;
 
     pub fn add_user(deps: DepsMut, data: Data) -> Result<Response, ContractError> {
-        user.save(deps.storage, data.name.clone(), &data);
+        USER.save(deps.storage, data.name.clone(), &data)?;
 
         Ok(Response::new()
             .add_attribute("name", data.name)
@@ -58,7 +57,7 @@ pub mod execute {
     }
 
     pub fn update_user(deps: DepsMut, data: Data) -> Result<Response, ContractError> {
-        user.update(
+        USER.update(
             deps.storage,
             data.name.clone(),
             |old_data: Option<Data>| -> StdResult<Data> {
@@ -66,7 +65,7 @@ pub mod execute {
                     Some(_one) => Ok(data.clone()),
                     None => Ok(data.clone())
                 } 
-            });
+            })?;
 
         Ok(Response::new()
             .add_attribute("name", data.name)
@@ -85,8 +84,8 @@ pub mod query {
     use super::*;
 
     pub fn get_data(deps: Deps, user_name: String) -> StdResult<Data> {
-        let userData = user.load(deps.storage, user_name.clone());
-
-        Ok(userData.unwrap())
+        let user_data = USER.load(deps.storage, user_name.clone())?;
+        
+        Ok(user_data)
     }
 }

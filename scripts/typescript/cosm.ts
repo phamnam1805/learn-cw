@@ -5,7 +5,8 @@ import {
     UploadResult,
     InstantiateResult,
     ExecuteResult,
-    JsonObject
+    JsonObject,
+    InstantiateOptions,
 } from "@cosmjs/cosmwasm-stargate";
 import { GasPrice, calculateFee, StdFee, Coin } from "@cosmjs/stargate";
 import {
@@ -67,7 +68,6 @@ export const uniOptions: Options = {
 export class Cosm {
     address: string;
     options: Options;
-    defaultFee: StdFee;
     client: SigningCosmWasmClient;
 
     constructor() {}
@@ -83,7 +83,6 @@ export class Cosm {
         instance.options = options;
         instance.address = account.address;
         instance.client = client;
-        instance.defaultFee = instance.getDefaultFee();
         return instance;
     };
 
@@ -128,10 +127,6 @@ export class Cosm {
         return calculateFee(this.options.fees.exec, this.options.gasPrice);
     };
 
-    getDefaultFee = (): StdFee => {
-        return calculateFee(200000, this.options.gasPrice);
-    };
-
     upload = async (wasm: Uint8Array): Promise<UploadResult> => {
         let uploadFee: StdFee = this.getUploadFee();
         return await this.client.upload(this.address, wasm, uploadFee);
@@ -140,7 +135,9 @@ export class Cosm {
     deployContractFromWasm = async (
         wasm: Uint8Array,
         instantiateMsg: Record<string, unknown>,
-        label: string
+        label: string,
+        admin: string,
+        gasLimit: number
     ): Promise<InstantiateResult> => {
         let uploadFee: StdFee = this.getUploadFee();
         let result: UploadResult = await this.client.upload(
@@ -150,13 +147,22 @@ export class Cosm {
         );
 
         const codeId = result.codeId;
+        let options: InstantiateOptions;
+        if (admin != null) {
+            options = {
+                admin: admin,
+            };
+        } else {
+            options = null;
+        }
 
         const instantiateResponse = await this.client.instantiate(
             this.address,
             codeId,
             instantiateMsg,
             label,
-            this.defaultFee
+            calculateFee(gasLimit, this.options.gasPrice),
+            options
         );
 
         return instantiateResponse;
@@ -165,14 +171,26 @@ export class Cosm {
     deployContractFromCodeId = async (
         codeId: number,
         instantiateMsg: Record<string, unknown>,
-        label: string
+        label: string,
+        admin: string,
+        gasLimit: number
     ): Promise<InstantiateResult> => {
+        let options: InstantiateOptions;
+        if (admin != null) {
+            options = {
+                admin: admin,
+            };
+        } else {
+            options = null;
+        }
+
         const instantiateResponse = await this.client.instantiate(
             this.address,
             codeId,
             instantiateMsg,
             label,
-            this.defaultFee
+            calculateFee(gasLimit, this.options.gasPrice),
+            options
         );
 
         return instantiateResponse;
@@ -182,13 +200,14 @@ export class Cosm {
         contractAddress: string,
         executeMsg: Record<string, unknown>,
         memo: string,
-        funds: readonly Coin[]
+        funds: readonly Coin[],
+        gasLimit: number
     ): Promise<ExecuteResult> => {
         return await this.client.execute(
             this.address,
             contractAddress,
             executeMsg,
-            this.defaultFee,
+            calculateFee(gasLimit, this.options.gasPrice),
             memo,
             funds
         );
