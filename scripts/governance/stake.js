@@ -4,7 +4,7 @@ import {
     InstantiateOptions
 } from "@cosmjs/cosmwasm-stargate";
 const fs = require("fs");
-const { coin } = require("@cosmjs/amino");
+import { coin } from "@cosmjs/amino";
 
 require("dotenv").config();
 
@@ -23,24 +23,14 @@ async function main() {
     await cosm2.hitFaucet();
 
     let tokenContractAddress = TOKEN;
-    let sTokenContractAddress = STOKEN
     let governanceContractAddress = GOVERNANCE;
 
-    let depositMsg = {
-        withdraw: {
-            s_token: true
+
+    let stakeMsg = {
+        stake: {
         }
     }
-
-    let sendMsg = {
-        send: {
-            contract: governanceContractAddress,
-            amount: "1000000",
-            msg: Buffer.from(JSON.stringify(depositMsg)).toString('base64'),
-        }
-    }
-
-    console.log(await cosm2.execute(sTokenContractAddress, sendMsg, "Hihi", [], 3000000));
+    console.log(await cosm2.execute(governanceContractAddress, stakeMsg, "Hihi", [coin(2000000, "umlg")], 3000000));
 }
 
 main();

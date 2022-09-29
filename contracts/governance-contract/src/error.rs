@@ -18,6 +18,9 @@ pub enum ContractError {
     #[error("NotToken")]
     NotToken {},
 
+    #[error("NotCoin")]
+    NotCoin {},
+
     #[error("Custom Error val: {val:?}")]
     CustomError { val: String },
     // Add any other custom errors you like here.

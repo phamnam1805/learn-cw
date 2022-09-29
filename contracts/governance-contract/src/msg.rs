@@ -12,12 +12,13 @@ pub struct InstantiateMsg {
 pub enum ExecuteMsg {
     Receive(Cw20ReceiveMsg),
     SetSToken {},
+    Stake {},
 }
 
 #[cw_serde]
 pub enum Cw20HookMsg {
     Deposit {},
-    Withdraw {},
+    Withdraw { s_token: bool },
 }
 
 #[cw_serde]

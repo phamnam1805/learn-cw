@@ -1,9 +1,8 @@
-use std::ops::Add;
 use std::vec;
 
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::{
-    entry_point, to_binary, Addr, Binary, CanonicalAddr, Deps, DepsMut, Env, MessageInfo, Response,
+    entry_point, to_binary, Addr, BankMsg, Binary, Deps, DepsMut, Env, MessageInfo, Response,
     StdResult, WasmMsg,
 };
 use cw2::set_contract_version;
@@ -70,12 +69,13 @@ pub fn execute(
     match msg {
         ExecuteMsg::Receive(receive_msg) => execute::receive(deps, info, receive_msg),
         ExecuteMsg::SetSToken {} => execute::set_s_token(deps, info),
+        ExecuteMsg::Stake {} => execute::stake(deps, info),
     }
 }
 
 pub mod execute {
     use crate::{error::ContractError, msg::Cw20HookMsg};
-    use cosmwasm_std::{from_binary, Uint128};
+    use cosmwasm_std::{from_binary, Coin, Uint128};
 
     use super::*;
     pub fn receive(
@@ -90,11 +90,15 @@ pub mod execute {
                 }
                 mint_s_token(deps, receive_msg.sender, receive_msg.amount)
             }
-            Some(Cw20HookMsg::Withdraw {}) => {
+            Some(Cw20HookMsg::Withdraw { s_token }) => {
                 if info.sender != S_TOKEN.load(deps.storage)? {
                     return Err(ContractError::NotSToken {});
                 }
-                withdraw(deps, receive_msg.sender, receive_msg.amount)
+                if s_token {
+                    transfer_s_token(deps, receive_msg.sender, receive_msg.amount)
+                } else {
+                    transfer_coin(deps, receive_msg.sender, receive_msg.amount)
+                }
             }
 
             None => Err(ContractError::Unexpected {}),
@@ -130,7 +134,7 @@ pub mod execute {
             .add_message(mint_wasm_msg))
     }
 
-    pub fn withdraw(
+    pub fn transfer_s_token(
         deps: DepsMut,
         recipient: String,
         amount: Uint128,
@@ -153,8 +157,42 @@ pub mod execute {
             funds: vec![],
         };
         Ok(Response::new()
-            .add_attribute("withdraw", amount.to_string())
+            .add_attribute("transfer_s_token", amount.to_string())
             .add_messages(vec![burn_wasm_msg, transfer_wasm_msg]))
+    }
+
+    pub fn transfer_coin(
+        _deps: DepsMut,
+        recipient: String,
+        amount: Uint128,
+    ) -> Result<Response, ContractError> {
+        let transfer_amount = amount.checked_div(Uint128::from(10u128)).ok().unwrap();
+        let bank_msg = BankMsg::Send {
+            to_address: recipient,
+            amount: vec![Coin {
+                denom: "umlg".to_string(),
+                amount: transfer_amount,
+            }],
+        };
+
+        Ok(Response::new()
+            .add_attribute("transfer_coin", transfer_amount)
+            .add_message(bank_msg))
+    }
+
+    pub fn stake(deps: DepsMut, info: MessageInfo) -> Result<Response, ContractError> {
+        let payment = info
+            .funds
+            .iter()
+            .find(|x| x.denom == "umlg" && x.amount > Uint128::zero())
+            .ok_or_else(|| ContractError::NotCoin {})?;
+
+        let amount = payment
+            .amount
+            .checked_mul(Uint128::from(10u128))
+            .ok()
+            .unwrap();
+        mint_s_token(deps, info.sender.to_string(), amount)
     }
 }
 

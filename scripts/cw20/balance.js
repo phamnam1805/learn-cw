@@ -27,8 +27,9 @@ async function main() {
         }
     }
 
-    console.log(await cosm2.query(tokenContractAddress, queryMsg));
-    console.log(await cosm2.query(sTokenContractAddress, queryMsg));
+    console.log("umlg: ", await cosm2.getBalance());
+    console.log("token: ", await cosm2.query(tokenContractAddress, queryMsg));
+    console.log("stoken: ", await cosm2.query(sTokenContractAddress, queryMsg));
     // {
     //     contractAddress: 'wasm14xjsd059c6e4zvszs29ars7tkqs97eaen6jc3vvhdl67mrtk6e5qr3jkx0',
     //     logs: [ { msg_index: 0, log: '', events: [Array] } ],
